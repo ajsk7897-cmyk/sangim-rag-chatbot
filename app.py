@@ -155,12 +155,13 @@ def load_rag_system():
         embedding_function=embeddings
     )
     
-    # 챗봇용 LLM 로드 (Gemini 2.5 Flash 사용)
+    # 챗봇용 LLM 로드 (Gemini 1.5 Flash 사용 - 일일 1,500회 무료 쿼터 제공)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         temperature=0.1,  # 정밀한 사실 기반 답변을 위해 온도를 낮춤
         max_output_tokens=1024,
-        google_api_key=api_key
+        google_api_key=api_key,
+        max_retries=6
     )
     
     return vectordb, llm
