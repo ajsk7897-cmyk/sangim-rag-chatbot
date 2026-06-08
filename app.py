@@ -146,7 +146,10 @@ def load_rag_system():
         return None, None
     
     # vectorize.py 와 동일한 모델과 설정 적용
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2")
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-2",
+        google_api_key=api_key
+    )
     vectordb = Chroma(
         persist_directory=str(db_dir),
         embedding_function=embeddings
@@ -156,7 +159,8 @@ def load_rag_system():
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.1,  # 정밀한 사실 기반 답변을 위해 온도를 낮춤
-        max_output_tokens=1024
+        max_output_tokens=1024,
+        google_api_key=api_key
     )
     
     return vectordb, llm
