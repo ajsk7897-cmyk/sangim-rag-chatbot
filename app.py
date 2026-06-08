@@ -113,13 +113,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. API 키 로드
-BASE_DIR = Path(__file__).resolve().parent
-env_path = BASE_DIR / "ChatbotAPI.env"
-env_values = dotenv_values(env_path)
-api_key = env_values.get("GEMINI_API_KEY")
+# 1) OS 환경변수 또는 Streamlit Secrets에서 우선 탐색 (배포 환경용)
+api_key = os.environ.get("GEMINI_API_KEY")
+
+# st.secrets 지원 여부 확인 후 로드
+if not api_key:
+    try:
+        api_key = st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        pass
+
+# 2) 찾지 못한 경우 로컬 ChatbotAPI.env 파일에서 로드 (로컬 개발용)
+if not api_key:
+    BASE_DIR = Path(__file__).resolve().parent
+    env_path = BASE_DIR / "ChatbotAPI.env"
+    if env_path.exists():
+        env_values = dotenv_values(env_path)
+        api_key = env_values.get("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("🔑 ChatbotAPI.env 파일에서 GEMINI_API_KEY를 찾을 수 없습니다. 설정 파일을 확인해 주세요.")
+    st.error("🔑 API 키를 찾을 수 없습니다. 로컬의 경우 ChatbotAPI.env 파일을 확인해 주시고, 클라우드 배포인 경우 Secrets 설정을 확인해 주세요.")
     st.stop()
 
 os.environ["GOOGLE_API_KEY"] = api_key
