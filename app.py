@@ -1,3 +1,6 @@
+import os
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 try:
     __import__('pysqlite3')
     import sys
@@ -6,7 +9,6 @@ except ImportError:
     pass
 
 import streamlit as st
-import os
 from pathlib import Path
 from dotenv import dotenv_values
 from langchain_chroma import Chroma
