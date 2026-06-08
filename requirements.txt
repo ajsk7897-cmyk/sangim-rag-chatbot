@@ -1,0 +1,8 @@
+streamlit
+langchain
+langchain-core
+langchain-chroma
+langchain-google-genai
+python-dotenv
+pypdf
+pysqlite3-binary
