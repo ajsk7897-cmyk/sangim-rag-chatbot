@@ -113,6 +113,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. API 키 로드
+BASE_DIR = Path(__file__).resolve().parent
+
 # 1) OS 환경변수 또는 Streamlit Secrets에서 우선 탐색 (배포 환경용)
 api_key = os.environ.get("GEMINI_API_KEY")
 
@@ -125,7 +127,6 @@ if not api_key:
 
 # 2) 찾지 못한 경우 로컬 ChatbotAPI.env 파일에서 로드 (로컬 개발용)
 if not api_key:
-    BASE_DIR = Path(__file__).resolve().parent
     env_path = BASE_DIR / "ChatbotAPI.env"
     if env_path.exists():
         env_values = dotenv_values(env_path)
