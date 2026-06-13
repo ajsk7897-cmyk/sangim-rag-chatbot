@@ -276,9 +276,9 @@ def load_rag_system():
         embedding_function=embeddings
     )
     
-    # 챗봇용 LLM 로드 (Gemini 1.5 Pro 사용 - 복잡한 제약조건 추론 및 사실 기반 답변)
+    # 챗봇용 LLM 로드 (Gemini 3.5 Flash 사용 - 무료 티어 API 한도 내에서 최고의 성능)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro",
+        model="gemini-3.5-flash",
         temperature=0.1,  # 정밀한 사실 기반 답변을 위해 온도를 낮춤
         max_output_tokens=4096,
         google_api_key=api_key,
@@ -524,7 +524,23 @@ with tab1:
                 st.session_state.messages.append({"role": "assistant", "content": ans})
             else:
                 # 1. 유사한 법률 데이터 검색
-                docs_with_scores = vectordb.similarity_search_with_relevance_scores(question, k=k_value)
+                docs_with_scores = None
+                try:
+                    docs_with_scores = vectordb.similarity_search_with_relevance_scores(question, k=k_value)
+                except Exception as e:
+                    error_msg = str(e)
+                    if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                        delay_match = re.search(r"retry in (\d+\.?\d*)s", error_msg)
+                        if delay_match:
+                            delay_sec = float(delay_match.group(1))
+                            ans = f"⚠️ 임베딩 API 무료 사용량 한도를 초과했습니다. 약 {int(delay_sec) + 1}초 후에 다시 질문해 주세요."
+                        else:
+                            ans = "⚠️ 임베딩 API 무료 사용량 한도를 초과했습니다. 잠시 후(약 1분) 다시 시도해 주세요."
+                    else:
+                        ans = f"⚠️ 문서 검색 중 오류가 발생했습니다: {e}"
+                    response_placeholder.markdown(ans)
+                    st.session_state.messages.append({"role": "assistant", "content": ans})
+                    st.rerun()
                 
                 # 2. Context 구성 및 출처 추출
                 context_list = []
@@ -551,18 +567,18 @@ with tab1:
    "제공된 백데이터에서 관련 정보를 찾을 수 없습니다."
 3. 만약 관련된 내용이 일부 있지만 확실하지 않은 정보가 섞여있다면, 확실한 부분만 제공된 백데이터를 인용하여 기술하고 확실치 않은 부분은 언급하지 않거나 찾을 수 없었다고 덧붙여 말하십시오.
 4. 법률 조항이나 판례 등을 언급할 경우 구체적인 조항번호나 출처를 명시하십시오.
-5. [개념 혼동 방지]: '상임법 전면 적용 대상 환산보증금 상한액(예: 부산 6억 9천만 원)'과 '최우선변제를 받기 위한 소액임차인 범위 환산보증금 기준(예: 부산 3,800만 원 이하)'은 완전히 다른 제도적 개념입니다. 사용자가 질문할 때 이 두 가지를 혼동하더라도 명확하게 분리하여 설명하십시오. 특히, 부산광역시의 법 적용 한도는 6.9억 원이지만 최우선변제 소액임차인 기준은 3,800만 원 이하(최우선변제금 1,300만 원)이므로 이 수치들을 절대로 섞거나 잘못 매칭하지 마십시오.
+5. [개념 혼동 방지]: '상임법 전면 적용 대상 환산보증금 상한액'과 '최우선변제를 받기 위한 소액임차인 범위 환산보증금 기준'은 완전히 다른 제도적 개념입니다. 사용자가 질문할 때 이 두 가지를 혼동하더라도 두 기준과 금액을 절대 섞거나 잘못 매칭하지 말고 명확하게 분리하여 설명하십시오.
 
 [답변 예시]
 질문: 부산지역 상임법 적용대상 환산보증금 금액과 최우선변제권 대상 금액을 알려줘
 답변: 부산지역의 상가건물 임대차보호법 관련 보증금 기준은 다음과 같이 두 가지로 명확히 구분됩니다.
 
 1. 상가건물 임대차보호법 전면 적용 대상 환산보증금 상한액:
-- 기준 금액: 6억 9천만 원 이하
+- 기준 금액: (제공된 데이터에 따른 금액 작성)
 
 2. 소액임차인 최우선변제권 대상 환산보증금 기준:
-- 소액임차인 범위: 3,800만 원 이하
-- 최우선변제금액: 1,300만 원 이하
+- 소액임차인 범위: (제공된 데이터에 따른 금액 작성)
+- 최우선변제금액: (제공된 데이터에 따른 금액 작성)
 
 이 두 가지 기준은 서로 다른 제도로, 상임법 적용 한도와 최우선변제 소액임차인 기준을 혼동하지 않도록 유의하시기 바랍니다.
 
@@ -581,7 +597,16 @@ with tab1:
                     try:
                         stream_res = chain.stream({"context": context, "question": question})
                     except Exception as e:
-                        st.error(f"LLM 호출 중 에러가 발생했습니다: {e}")
+                        error_msg = str(e)
+                        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                            delay_match = re.search(r"retry in (\d+\.?\d*)s", error_msg)
+                            if delay_match:
+                                delay_sec = float(delay_match.group(1))
+                                st.error(f"⚠️ 답변 생성 API 무료 사용량 한도를 초과했습니다. 약 {int(delay_sec) + 1}초 후에 다시 질문해 주세요.")
+                            else:
+                                st.error("⚠️ 답변 생성 API 무료 사용량 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.")
+                        else:
+                            st.error(f"LLM 호출 중 에러가 발생했습니다: {e}")
                         stream_res = None
                         
                 # 5. 최종 답변 실시간 스트리밍 출력
