@@ -1,0 +1,20 @@
+ : KO
+ : EN
+ : JP
+ : CN
+ : EXPERTISE
+ : PROFESSIONALS
+ : INSIGHTS
+ : ABOUT
+ : Home
+ : 자료와 소식
+ : Practice 분야별
+ : Industry산업별
+ : Region지역별
+['cateClass'] : 건설
+['cateClass'] : 게임·리조트·엔터테인먼트
+['cateClass'] : 공공계약
+['cateClass'] : 공정거래
+['cateClass'] : 관세 및 국제통상 +
+['cateClass'] : 국제중재·소송
+['cateClass'] : 금융규제 및 컴플라이언스 +

@@ -10,7 +10,7 @@ except ImportError:
 
 import streamlit as st
 from pathlib import Path
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -136,8 +136,8 @@ if not api_key:
 if not api_key:
     env_path = BASE_DIR / "ChatbotAPI.env"
     if env_path.exists():
-        env_values = dotenv_values(env_path)
-        api_key = env_values.get("GEMINI_API_KEY")
+        load_dotenv(env_path)
+        api_key = os.environ.get("GEMINI_API_KEY")
 
 if not api_key:
     st.error("🔑 API 키를 찾을 수 없습니다. 로컬의 경우 ChatbotAPI.env 파일을 확인해 주시고, 클라우드 배포인 경우 Secrets 설정을 확인해 주세요.")
@@ -276,9 +276,9 @@ def load_rag_system():
         embedding_function=embeddings
     )
     
-    # 챗봇용 LLM 로드 (Gemini 3.5 Flash 사용 - 무료 티어 API 한도 내에서 최고의 성능)
+    # 챗봇용 LLM 로드 (Gemini 1.5 Flash 사용 - 무료 티어 API 한도 내에서 최고의 성능)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-3.5-flash",
+        model="gemini-1.5-flash",
         temperature=0.1,  # 정밀한 사실 기반 답변을 위해 온도를 낮춤
         max_output_tokens=4096,
         google_api_key=api_key,
@@ -604,28 +604,32 @@ with tab1:
                             st.error(f"LLM 호출 중 에러가 발생했습니다: {e}")
                         stream_res = None
                         
-                # 5. 최종 답변 실시간 스트리밍 출력
+                # 5. 최종 답변 실시간 스트리밍 출력 (st.write_stream 활용)
                 answer = ""
                 if stream_res:
+                    # 기존에 생성된 placeholder를 비우고 native write_stream 사용
+                    response_placeholder.empty()
                     try:
-                        for chunk in stream_res:
-                            content = chunk.content
-                            if isinstance(content, str):
-                                answer += content
-                            elif isinstance(content, list):
-                                for item in content:
-                                    if isinstance(item, str):
-                                        answer += item
-                                    elif isinstance(item, dict) and "text" in item:
-                                        answer += item["text"]
-                            response_placeholder.markdown(answer + " ▌")
+                        def generate_chunks():
+                            for chunk in stream_res:
+                                content = chunk.content
+                                if isinstance(content, str):
+                                    yield content
+                                elif isinstance(content, list):
+                                    for item in content:
+                                        if isinstance(item, str):
+                                            yield item
+                                        elif isinstance(item, dict) and "text" in item:
+                                            yield item["text"]
+                                            
+                        # st.write_stream을 사용하여 타자 치듯 실시간 출력
+                        answer = st.write_stream(generate_chunks())
                     except Exception as e:
                         st.warning(f"\n[스트리밍 중간 끊김 발생] 일부 답변만 로드되었습니다: {e}")
                         
                 if not answer:
                     answer = "답변 생성에 실패했습니다. (API 오류 또는 제한)"
-                    
-                response_placeholder.markdown(answer)
+                    st.markdown(answer)
                 
                 # 6. 소스 및 답변 세션 저장
                 st.session_state.messages.append({
