@@ -276,9 +276,9 @@ def load_rag_system():
         embedding_function=embeddings
     )
     
-    # 챗봇용 LLM 로드 (Gemini 1.5 Flash 사용 - 무료 티어 API 한도 내에서 최고의 성능)
+    # 챗봇용 LLM 로드 (Gemini 3.5 Flash 사용 - 무료 티어 API 한도 내에서 최고의 성능)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-3.5-flash",
         temperature=0.1,  # 정밀한 사실 기반 답변을 위해 온도를 낮춤
         max_output_tokens=4096,
         google_api_key=api_key,
