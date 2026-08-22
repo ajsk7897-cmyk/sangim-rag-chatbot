@@ -718,8 +718,9 @@ with tab2:
     if api_btn:
         with st.spinner("국가법령정보센터에서 판례를 수집하고 있습니다..."):
             import subprocess
+            import sys
             try:
-                result = subprocess.run(["python", str(BASE_DIR / "scripts" / "collect_law_api.py")], capture_output=True, text=True, encoding="utf-8")
+                result = subprocess.run([sys.executable, str(BASE_DIR / "scripts" / "collect_law_api.py")], capture_output=True, text=True, encoding="utf-8")
                 if result.returncode == 0:
                     st.success("대법원 판례 수집 완료!")
                     st.code(result.stdout, language="text")
@@ -731,8 +732,9 @@ with tab2:
     if crawl_btn:
         with st.spinner("웹에서 최신 칼럼과 뉴스를 수집하고 있습니다..."):
             import subprocess
+            import sys
             try:
-                result = subprocess.run(["python", str(BASE_DIR / "scripts" / "collect_crawling.py")], capture_output=True, text=True, encoding="utf-8")
+                result = subprocess.run([sys.executable, str(BASE_DIR / "scripts" / "collect_crawling.py")], capture_output=True, text=True, encoding="utf-8")
                 if result.returncode == 0:
                     st.success("뉴스 및 칼럼 수집 완료!")
                     st.code(result.stdout, language="text")
