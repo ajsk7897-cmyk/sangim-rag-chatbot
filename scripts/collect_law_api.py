@@ -22,7 +22,10 @@ def collect_precedents():
         "display": 50 # 한 번에 가져올 최대 건수 (50건)
     }
     
-    response = requests.get(BASE_URL, params=params)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    response = requests.get(BASE_URL, params=params, headers=headers)
     if response.status_code != 200:
         print(f"API 호출 실패: 상태 코드 {response.status_code}")
         return False
@@ -67,7 +70,7 @@ def collect_precedents():
             "ID": seq,
             "type": "XML"
         }
-        res = requests.get(detail_url, params=det_params)
+        res = requests.get(detail_url, params=det_params, headers=headers)
         if res.status_code == 200:
             try:
                 d_root = ET.fromstring(res.content)
